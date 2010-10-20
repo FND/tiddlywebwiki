@@ -65,6 +65,58 @@ adaptor.prototype.getTiddlerList = function(context, userParams, callback) {
 	return container.tiddlers().get(_callback, errback); // XXX: !!! lacks enhanced privileges for HTTP requests off file: URI
 };
 
+// retrieve a list of revisions for a given tiddler
+// results are provided to callback via context.revisions
+adaptor.prototype.getTiddlerRevisionList = function(title, limit, context, userParams, callback) {
+	context = this.setContext(context, userParams, callback);
+	var tid = new tiddlyweb.Tiddler(title);
+	var container = resolveWorkspace(context.workspace);
+	var cls = tiddlyweb._capitalize(container.type);
+	tid[container.type] = new tiddlyweb[cls](container.name, context.host);
+	// XXX: hiding callbacks in closures is bad!?
+	var _callback = function(tids, status, xhr) { // XXX: DRY; cf. getTiddlerList
+		context.revisions = $.map(tids, function(tid, i) { // XXX: should be context.tiddlers?
+			return adaptor.toTiddler(tid, context.host);
+		});
+		augment(context, true, xhr);
+		if(callback) {
+			callback(context, userParams);
+		}
+	};
+	var errback = function(xhr, error, exc) {
+		augment(context, false, xhr);
+		if(callback) {
+			callback(context, userParams);
+		}
+	};
+	return tid.revisions().get(_callback, errback); // XXX: !!! lacks enhanced privileges for HTTP requests off file: URI
+};
+
+// retrieve an individual tiddler
+// results are provided to callback via context.tiddler
+adaptor.prototype.getTiddler = function(title, context, userParams, callback) {
+	context = this.setContext(context, userParams, callback);
+	var tid = new tiddlyweb.Tiddler(title);
+	var container = resolveWorkspace(context.workspace);
+	var cls = tiddlyweb._capitalize(container.type);
+	tid[container.type] = new tiddlyweb[cls](container.name, context.host);
+	// XXX: hiding callbacks in closures is bad!?
+	var _callback = function(tid, status, xhr) {
+		context.tiddler = adaptor.toTiddler(tid, context.host);
+		augment(context, true, xhr);
+		if(callback) {
+			callback(context, userParams);
+		}
+	};
+	var errback = function(xhr, error, exc) {
+		augment(context, false, xhr);
+		if(callback) {
+			callback(context, userParams);
+		}
+	};
+	return tid.get(_callback, errback); // XXX: !!! lacks enhanced privileges for HTTP requests off file: URI
+};
+
 // retrieve current status (requires TiddlyWeb status plugin)
 // context.workspace is not required
 adaptor.prototype.getStatus = function(context, userParams, callback) { // XXX: unnecessary; nothing TiddlyWiki-specific
