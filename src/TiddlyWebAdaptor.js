@@ -40,6 +40,7 @@ adaptor.serverLabel = "TiddlyWeb";
 // optional userParams object passed into the request method.
 
 // retrieve a list of tiddlers
+// results are provided to callback via context.tiddlers
 adaptor.prototype.getTiddlerList = function(context, userParams, callback) {
 	context = this.setContext(context, userParams, callback);
 	var container = resolveWorkspace(context.workspace);
@@ -61,7 +62,7 @@ adaptor.prototype.getTiddlerList = function(context, userParams, callback) {
 			callback(context, userParams);
 		}
 	};
-	return container.tiddlers().get(callback, errback); // XXX: !!! lacks enhanced privileges for HTTP requests off file: URI
+	return container.tiddlers().get(_callback, errback); // XXX: !!! lacks enhanced privileges for HTTP requests off file: URI
 };
 
 // retrieve current status (requires TiddlyWeb status plugin)
