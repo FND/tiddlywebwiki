@@ -99,6 +99,26 @@ adaptor.prototype.getTiddler = function(title, context, userParams, callback) {
 	return tid.get(_callback, errback); // XXX: !!! lacks enhanced privileges for HTTP requests off file: URI
 };
 
+adaptor.prototype.deleteTiddler = function(tiddler, context, userParams, callback) {
+	context = this.setContext(context, userParams, callback);
+	var tid = new tiddlyweb.Tiddler(tiddler.title);
+	var bag = tiddler.fields["server.bag"];
+	if(bag) {
+		tid.bag = new tiddlyweb.Bag(bag, context.host);
+	} else {
+		var recipe = tiddler.fields["server.recipe"];
+		tid.recipe = new tiddlyweb.Recipe(recipe, context.host);
+	}
+	// XXX: hiding callbacks in closures is bad!?
+	var _callback = function(tid, status, xhr) {
+		finalize(context, true, xhr);
+	};
+	var errback = function(xhr, error, exc) {
+		finalize(context, false, xhr);
+	};
+	return tid["delete"](_callback, errback); // XXX: !!! lacks enhanced privileges for HTTP requests off file: URI
+};
+
 // retrieve current status (requires TiddlyWeb status plugin)
 // context.workspace is not required
 adaptor.prototype.getStatus = function(context, userParams, callback) { // XXX: unnecessary; nothing TiddlyWiki-specific
@@ -150,8 +170,6 @@ var finalize = function(context, status, xhr) { // XXX: rename?
 	if(context.callback) {
 		context.callback(context, context.userParams);
 	}
-};
-
 };
 
 // determine container (bag/recipe) based on workspace
