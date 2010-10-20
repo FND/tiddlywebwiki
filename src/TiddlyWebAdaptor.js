@@ -51,16 +51,10 @@ adaptor.prototype.getTiddlerList = function(context, userParams, callback) {
 		context.tiddlers = $.map(tids, function(tid, i) {
 			return adaptor.toTiddler(tid, context.host);
 		});
-		augment(context, true, xhr);
-		if(callback) {
-			callback(context, userParams);
-		}
+		finalize(context, true, xhr);
 	};
 	var errback = function(xhr, error, exc) {
-		augment(context, false, xhr);
-		if(callback) {
-			callback(context, userParams);
-		}
+		finalize(context, false, xhr);
 	};
 	return container.tiddlers().get(_callback, errback); // XXX: !!! lacks enhanced privileges for HTTP requests off file: URI
 };
@@ -78,16 +72,10 @@ adaptor.prototype.getTiddlerRevisionList = function(title, limit, context, userP
 		context.revisions = $.map(tids, function(tid, i) { // XXX: should be context.tiddlers?
 			return adaptor.toTiddler(tid, context.host);
 		});
-		augment(context, true, xhr);
-		if(callback) {
-			callback(context, userParams);
-		}
+		finalize(context, true, xhr);
 	};
 	var errback = function(xhr, error, exc) {
-		augment(context, false, xhr);
-		if(callback) {
-			callback(context, userParams);
-		}
+		finalize(context, false, xhr);
 	};
 	return tid.revisions().get(_callback, errback); // XXX: !!! lacks enhanced privileges for HTTP requests off file: URI
 };
@@ -103,16 +91,10 @@ adaptor.prototype.getTiddler = function(title, context, userParams, callback) {
 	// XXX: hiding callbacks in closures is bad!?
 	var _callback = function(tid, status, xhr) {
 		context.tiddler = adaptor.toTiddler(tid, context.host);
-		augment(context, true, xhr);
-		if(callback) {
-			callback(context, userParams);
-		}
+		finalize(context, true, xhr);
 	};
 	var errback = function(xhr, error, exc) {
-		augment(context, false, xhr);
-		if(callback) {
-			callback(context, userParams);
-		}
+		finalize(context, false, xhr);
 	};
 	return tid.get(_callback, errback); // XXX: !!! lacks enhanced privileges for HTTP requests off file: URI
 };
@@ -128,16 +110,10 @@ adaptor.prototype.getStatus = function(context, userParams, callback) { // XXX: 
 		// XXX: hiding callbacks in closures is bad!?
 		success: function(data, status, xhr) {
 			context.serverStatus = data;
-			augment(context, true, xhr);
-			if(callback) {
-				callback(context, userParams);
-			}
+			finalize(context, true, xhr);
 		},
 		error: function(xhr, error, exc) {
-			augment(context, false, xhr);
-			if(callback) {
-				callback(context, userParams);
-			}
+			finalize(context, false, xhr);
 		}
 	});
 };
@@ -166,13 +142,16 @@ adaptor.toTiddler = function(tid, host) {
 	return tiddler;
 };
 
-// add status, statusText and httpStatus to context
-// NB: modifies context object directly
-var augment = function(context, status, xhr) { // XXX: rename?
+// trigger callback with canonical context
+var finalize = function(context, status, xhr) { // XXX: rename?
 	context.status = status;
 	context.statusText = xhr.statusText; // XXX: not required!?
 	context.httpStatus = xhr.status; // XXX: not required!?
-	// TODO: handle callback?
+	if(context.callback) {
+		context.callback(context, context.userParams);
+	}
+};
+
 };
 
 // determine container (bag/recipe) based on workspace
