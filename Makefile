@@ -1,4 +1,10 @@
-.PHONY: all tiddlywiki remotes clean test dist release pypi peermore makebundle uploadbundle bundle
+.PHONY: all tiddlywiki remotes jslib clean test dist release pypi peermore makebundle uploadbundle bundle
+
+wrap_jslib = curl -s $(2) | \
+	{ \
+		echo "/***"; echo $(2); echo "***/"; \
+		echo "//{{{"; cat -; echo "//}}}"; \
+	} > $(1)
 
 all:
 	@echo "No target"
@@ -7,8 +13,14 @@ tiddlywiki:
 	mkdir tiddlywebwiki/resources || true
 	wget http://tiddlywiki.com/empty.html -O tiddlywebwiki/resources/empty.html
 
-remotes: tiddlywiki
+remotes: jslib tiddlywiki
 	./cacher
+
+jslib:
+	$(call wrap_jslib, src/chrjs.js, \
+		http://github.com/tiddlyweb/chrjs/raw/master/main.js)
+	$(call wrap_jslib, src/jquery-json.js, \
+		http://jquery-json.googlecode.com/files/jquery.json-2.2.min.js
 
 clean:
 	find . -name "*.pyc" |xargs rm || true
