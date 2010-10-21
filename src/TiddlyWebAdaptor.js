@@ -121,6 +121,13 @@ adaptor.prototype.putTiddler = function(tiddler, context, userParams, callback) 
 		context.workspace = "recipes/" + recipe;
 		tid.recipe = new tiddlyweb.Recipe(recipe, context.host);
 	} // TODO: else use server.workspace?
+	var etag = tiddler.fields["server.etag"];
+	// TODO: !!! convention for suppressing ETag (explicit clobbering)
+	if(etag) {
+		tid.etag = etag;
+	} else {
+		tid.etag = 0; // XXX: !!! convention not yet established
+	}
 	// XXX: hiding callbacks in closures is bad!?
 	var _callback = function(tid, status, xhr) {
 		context.tiddler = adaptor.toTiddler(tid, context.host);
@@ -153,6 +160,7 @@ adaptor.prototype.deleteTiddler = function(tiddler, context, userParams, callbac
 		context.workspace = "recipes/" + recipe;
 		tid.recipe = new tiddlyweb.Recipe(recipe, context.host);
 	} // TODO: else use server.workspace?
+	tid.etag = tiddler.fields["server.etag"]; // XXX: !!! must not be optional!?
 	// XXX: hiding callbacks in closures is bad!?
 	var _callback = function(tid, status, xhr) {
 		finalize(context, true, xhr);
@@ -197,6 +205,8 @@ adaptor.toTiddler = function(tid, host) {
 	}
 	tid.fields["server.page.title"] = tid.title;
 	tid.fields["server.title"] = tid.title; // XXX: !!! deprecated; retained for backwards-compatibility
+	tid.fields["server.page.etag"] = tid.etag;
+	tid.fields["server.etag"] = tid.etag; // XXX: !!! deprecated; retained for backwards-compatibility
 	tid.fields["server.page.permissions"] = tid.permissions.join(", ");
 	tid.fields["server.permissions"] = tid.fields["server.page.permissions"]; // XXX: !!! deprecated; retained for backwards-compatibility
 	tid.fields["server.page.revision"] = tid.revision;
