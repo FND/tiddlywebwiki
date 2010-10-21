@@ -93,27 +93,38 @@ adaptor.prototype.getTiddler = function(title, context, userParams, callback) {
 		context.tiddler = adaptor.toTiddler(tid, context.host);
 		finalize(context, true, xhr);
 	};
-	var errback = function(xhr, error, exc) {
+	var errback = function(xhr, error, exc, tid) {
 		finalize(context, false, xhr);
 	};
 	return tid.get(_callback, errback); // XXX: !!! lacks enhanced privileges for HTTP requests off file: URI
 };
 
+// erase an individual tiddler
+// context.host and context.workspace are optional and determined from tiddler
 adaptor.prototype.deleteTiddler = function(tiddler, context, userParams, callback) {
 	context = this.setContext(context, userParams, callback);
+	context.title = tiddler.title; // XXX: required by sync?
 	var tid = new tiddlyweb.Tiddler(tiddler.title);
 	var bag = tiddler.fields["server.bag"];
-	if(bag) {
+	context.host = context.host || this.fullHostName(tiddler.fields["server.host"]);
+	var bag = tiddler.fields["server.bag"];
+	var recipe = tiddler.fields["server.recipe"];
+	if(context.workspace) {
+		var container = resolveWorkspace(context.workspace);
+		var cls = tiddlyweb._capitalize(container.type);
+		tid[container.type] = new tiddlyweb[cls](container.name, context.host);
+	} else if(bag) {
+		context.workspace = "bags/" + bag;
 		tid.bag = new tiddlyweb.Bag(bag, context.host);
-	} else {
-		var recipe = tiddler.fields["server.recipe"];
+	} else if(recipe) {
+		context.workspace = "recipes/" + recipe;
 		tid.recipe = new tiddlyweb.Recipe(recipe, context.host);
-	}
+	} // TODO: else use server.workspace?
 	// XXX: hiding callbacks in closures is bad!?
 	var _callback = function(tid, status, xhr) {
 		finalize(context, true, xhr);
 	};
-	var errback = function(xhr, error, exc) {
+	var errback = function(xhr, error, exc, tid) {
 		finalize(context, false, xhr);
 	};
 	return tid["delete"](_callback, errback); // XXX: !!! lacks enhanced privileges for HTTP requests off file: URI
