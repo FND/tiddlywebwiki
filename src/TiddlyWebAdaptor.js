@@ -105,7 +105,7 @@ adaptor.prototype.getTiddler = function(title, context, userParams, callback) {
 adaptor.prototype.putTiddler = function(tiddler, context, userParams, callback) {
 	context = this.setContext(context, userParams, callback);
 	context.title = tiddler.title; // XXX: required by sync?
-	context.tiddler = tiddler; // XXX: unnecessary?
+	context.tiddler = tiddler;
 	var tid = new tiddlyweb.Tiddler(tiddler.title);
 	context.host = context.host || this.fullHostName(tiddler.fields["server.host"]);
 	var bag = tiddler.fields["server.bag"];
@@ -128,9 +128,20 @@ adaptor.prototype.putTiddler = function(tiddler, context, userParams, callback) 
 	} else {
 		tid.etag = 0; // XXX: !!! convention not yet established
 	}
+	tid.type = tiddler.fields["server.content-type"] || null;
+	tid.text = tiddler.text;
+	tid.tags = tiddler.tags;
+	tid.fields = {};
+	$.each(tiddler.fields, function(key, value) {
+		if(key != "changecount" && key.indexOf("server.") != 0) {
+			tid.fields[key] = value;
+		}
+	});
 	// XXX: hiding callbacks in closures is bad!?
 	var _callback = function(tid, status, xhr) {
-		context.tiddler = adaptor.toTiddler(tid, context.host);
+		context.tiddler.fields["server.bag"] = tid.bag.name;
+		context.tiddler.fields["server.workspace"] = "bags/" + tid.bag.name;
+		context.tiddler.fields["server.etag"] = tid.etag;
 		finalize(context, true, xhr);
 	};
 	var errback = function(xhr, error, exc, tid) {
@@ -145,7 +156,6 @@ adaptor.prototype.deleteTiddler = function(tiddler, context, userParams, callbac
 	context = this.setContext(context, userParams, callback);
 	context.title = tiddler.title; // XXX: required by sync?
 	var tid = new tiddlyweb.Tiddler(tiddler.title);
-	var bag = tiddler.fields["server.bag"];
 	context.host = context.host || this.fullHostName(tiddler.fields["server.host"]);
 	var bag = tiddler.fields["server.bag"];
 	var recipe = tiddler.fields["server.recipe"];
@@ -205,8 +215,10 @@ adaptor.toTiddler = function(tid, host) {
 	}
 	tid.fields["server.page.title"] = tid.title;
 	tid.fields["server.title"] = tid.title; // XXX: !!! deprecated; retained for backwards-compatibility
-	tid.fields["server.page.etag"] = tid.etag;
-	tid.fields["server.etag"] = tid.etag; // XXX: !!! deprecated; retained for backwards-compatibility
+	if(tid.etag) { // collection tiddlers lack ETag
+		tid.fields["server.page.etag"] = tid.etag;
+		tid.fields["server.etag"] = tid.etag; // XXX: !!! deprecated; retained for backwards-compatibility
+	}
 	tid.fields["server.page.permissions"] = tid.permissions.join(", ");
 	tid.fields["server.permissions"] = tid.fields["server.page.permissions"]; // XXX: !!! deprecated; retained for backwards-compatibility
 	tid.fields["server.page.revision"] = tid.revision;
