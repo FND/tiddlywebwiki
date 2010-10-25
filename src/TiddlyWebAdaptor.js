@@ -101,7 +101,7 @@ adaptor.prototype.getTiddler = function(title, context, userParams, callback) {
 
 // store an individual tiddler
 // context.host and context.workspace are optional and determined from tiddler
-// updated tiddler is  provided to callback via context.tiddler
+// updated tiddler is provided to callback via context.tiddler
 adaptor.prototype.putTiddler = function(tiddler, context, userParams, callback) {
 	context = this.setContext(context, userParams, callback);
 	context.title = tiddler.title; // XXX: required by sync?
@@ -139,10 +139,9 @@ adaptor.prototype.putTiddler = function(tiddler, context, userParams, callback) 
 	});
 	// XXX: hiding callbacks in closures is bad!?
 	var _callback = function(tid, status, xhr) {
-		context.tiddler.fields["server.bag"] = tid.bag.name;
-		context.tiddler.fields["server.workspace"] = "bags/" + tid.bag.name;
-		context.tiddler.fields["server.etag"] = tid.etag;
-		finalize(context, true, xhr);
+		context.workspace = "bags/" + tid.bag.name;
+		context.adaptor.getTiddler(tid.title, context, context.userParams,
+			context.callback);
 	};
 	var errback = function(xhr, error, exc, tid) {
 		finalize(context, false, xhr);
@@ -209,7 +208,7 @@ adaptor.toTiddler = function(tid, host) {
 		tid.fields["server.recipe"] = tid.recipe.name;
 	}
 	tid.fields["server.workspace"] = "bags/" + tid.bag.name;
-	if(tid.type && tid.type != "None") {
+	if(tid.type && tid.type != "None") { // "None" is currently a bug in TiddlyWeb
 		tid.fields["server.page.content-type"] = tid.type;
 		tid.fields["server.content-type"] = tid.type; // XXX: !!! deprecated; retained for backwards-compatibility
 	}
