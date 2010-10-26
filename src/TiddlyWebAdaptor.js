@@ -40,7 +40,7 @@ adaptor.serverLabel = "TiddlyWeb";
 // optional userParams object passed into the request method.
 
 // retrieve a list of tiddlers
-// results are provided to callback via context.tiddlers
+// results are provided to callback via context.tiddlers if successful
 adaptor.prototype.getTiddlerList = function(context, userParams, callback) {
 	context = this.setContext(context, userParams, callback);
 	var container = resolveWorkspace(context.workspace);
@@ -60,7 +60,7 @@ adaptor.prototype.getTiddlerList = function(context, userParams, callback) {
 };
 
 // retrieve a list of revisions for a given tiddler
-// results are provided to callback via context.revisions
+// results are provided to callback via context.revisions if successful
 adaptor.prototype.getTiddlerRevisionList = function(title, limit, context, userParams, callback) {
 	context = this.setContext(context, userParams, callback);
 	var tid = new tiddlyweb.Tiddler(title);
@@ -81,7 +81,7 @@ adaptor.prototype.getTiddlerRevisionList = function(title, limit, context, userP
 };
 
 // retrieve an individual tiddler
-// results are provided to callback via context.tiddler
+// results are provided to callback via context.tiddler if successful
 adaptor.prototype.getTiddler = function(title, context, userParams, callback) {
 	context = this.setContext(context, userParams, callback);
 	var tid = new tiddlyweb.Tiddler(title);
@@ -101,7 +101,8 @@ adaptor.prototype.getTiddler = function(title, context, userParams, callback) {
 
 // store an individual tiddler
 // context.host and context.workspace are optional and determined from tiddler
-// updated tiddler is provided to callback via context.tiddler
+// updated tiddler is provided to callback via context.tiddler, with
+// context.status indicating success
 adaptor.prototype.putTiddler = function(tiddler, context, userParams, callback) {
 	context = this.setContext(context, userParams, callback);
 	context.title = tiddler.title; // XXX: required by sync?
@@ -128,7 +129,7 @@ adaptor.prototype.putTiddler = function(tiddler, context, userParams, callback) 
 	} else {
 		tid.etag = 0; // XXX: !!! convention not yet established
 	}
-	tid.type = tiddler.fields["server.content-type"] || null;
+	tid.type = tiddler.fields["server.content-type"] || null; // XXX: !!! should be server.page.content-type!?
 	tid.text = tiddler.text;
 	tid.tags = tiddler.tags;
 	tid.fields = {};
@@ -151,6 +152,7 @@ adaptor.prototype.putTiddler = function(tiddler, context, userParams, callback) 
 
 // erase an individual tiddler
 // context.host and context.workspace are optional and determined from tiddler
+// context.status in callback indicates success
 adaptor.prototype.deleteTiddler = function(tiddler, context, userParams, callback) { // TODO: DRY (cf. putTiddler)
 	context = this.setContext(context, userParams, callback);
 	context.title = tiddler.title; // XXX: required by sync?
@@ -182,6 +184,7 @@ adaptor.prototype.deleteTiddler = function(tiddler, context, userParams, callbac
 
 // retrieve current status (requires TiddlyWeb status plugin)
 // context.workspace is not required
+// results are provided to callback via context.serverStatus if successful
 adaptor.prototype.getStatus = function(context, userParams, callback) { // XXX: unnecessary; nothing TiddlyWiki-specific
 	context = this.setContext(context, userParams, callback);
 	return ajaxReq({
@@ -190,7 +193,7 @@ adaptor.prototype.getStatus = function(context, userParams, callback) { // XXX: 
 		dataType: "json",
 		// XXX: hiding callbacks in closures is bad!?
 		success: function(data, status, xhr) {
-			context.serverStatus = data;
+			context.serverStatus = data; // XXX: rename?
 			finalize(context, true, xhr);
 		},
 		error: function(xhr, error, exc) {
