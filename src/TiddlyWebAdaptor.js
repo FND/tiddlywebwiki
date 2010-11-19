@@ -46,7 +46,6 @@ adaptor.prototype.getTiddlerList = function(context, userParams, callback) {
 	var container = resolveWorkspace(context.workspace);
 	var cls = tiddlyweb._capitalize(container.type);
 	container = new tiddlyweb[cls](container.name, context.host);
-	// XXX: hiding callbacks in closures is bad!?
 	var _callback = function(tids, status, xhr) {
 		context.tiddlers = $.map(tids, function(tid, i) {
 			return adaptor.toTiddler(tid, context.host);
@@ -67,7 +66,6 @@ adaptor.prototype.getTiddlerRevisionList = function(title, limit, context, userP
 	var container = resolveWorkspace(context.workspace);
 	var cls = tiddlyweb._capitalize(container.type);
 	tid[container.type] = new tiddlyweb[cls](container.name, context.host);
-	// XXX: hiding callbacks in closures is bad!?
 	var _callback = function(tids, status, xhr) { // XXX: DRY; cf. getTiddlerList
 		context.revisions = $.map(tids, function(tid, i) { // XXX: should be context.tiddlers?
 			return adaptor.toTiddler(tid, context.host);
@@ -88,7 +86,6 @@ adaptor.prototype.getTiddler = function(title, context, userParams, callback) {
 	var container = resolveWorkspace(context.workspace);
 	var cls = tiddlyweb._capitalize(container.type);
 	tid[container.type] = new tiddlyweb[cls](container.name, context.host);
-	// XXX: hiding callbacks in closures is bad!?
 	var _callback = function(tid, status, xhr) {
 		context.tiddler = adaptor.toTiddler(tid, context.host);
 		finalize(context, true, xhr);
@@ -106,7 +103,7 @@ adaptor.prototype.getTiddler = function(title, context, userParams, callback) {
 adaptor.prototype.putTiddler = function(tiddler, context, userParams, callback) {
 	context = this.setContext(context, userParams, callback);
 	context.title = tiddler.title; // XXX: required by sync?
-	context.tiddler = tiddler;
+	context.tiddler = tiddler; // XXX: required by sync?
 	var tid = new tiddlyweb.Tiddler(tiddler.title);
 	context.host = context.host || this.fullHostName(tiddler.fields["server.host"]);
 	var bag = tiddler.fields["server.bag"];
@@ -138,7 +135,6 @@ adaptor.prototype.putTiddler = function(tiddler, context, userParams, callback) 
 			tid.fields[key] = value;
 		}
 	});
-	// XXX: hiding callbacks in closures is bad!?
 	var _callback = function(tid, status, xhr) {
 		context.workspace = "bags/" + tid.bag.name;
 		context.adaptor.getTiddler(tid.title, context, context.userParams,
@@ -172,7 +168,6 @@ adaptor.prototype.deleteTiddler = function(tiddler, context, userParams, callbac
 		tid.recipe = new tiddlyweb.Recipe(recipe, context.host);
 	} // TODO: else use server.workspace?
 	tid.etag = tiddler.fields["server.etag"]; // XXX: !!! must not be optional!?
-	// XXX: hiding callbacks in closures is bad!?
 	var _callback = function(tid, status, xhr) {
 		finalize(context, true, xhr);
 	};
@@ -191,7 +186,6 @@ adaptor.prototype.getStatus = function(context, userParams, callback) { // XXX: 
 		url: context.host + "/status",
 		type: "GET",
 		dataType: "json",
-		// XXX: hiding callbacks in closures is bad!?
 		success: function(data, status, xhr) {
 			context.serverStatus = data; // XXX: rename?
 			finalize(context, true, xhr);
