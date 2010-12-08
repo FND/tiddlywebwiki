@@ -126,7 +126,7 @@ adaptor.prototype.putTiddler = function(tiddler, context, userParams, callback) 
 	} else {
 		tid.etag = 0; // XXX: !!! convention not yet established
 	}
-	tid.type = tiddler.fields["server.content-type"] || null; // XXX: !!! should be server.page.content-type!?
+	tid.type = tiddler.fields["server.content-type"] || null;
 	tid.text = tiddler.text;
 	tid.tags = tiddler.tags;
 	tid.fields = {};
@@ -206,17 +206,14 @@ adaptor.toTiddler = function(tid, host) {
 	}
 	tid.fields["server.workspace"] = "bags/" + tid.bag.name;
 	if(tid.type && tid.type != "None") { // "None" is currently a bug in TiddlyWeb
-		tid.fields["server.page.content-type"] = tid.type;
-		tid.fields["server.content-type"] = tid.type; // XXX: !!! deprecated; retained for backwards-compatibility
+		tid.fields["server.content-type"] = tid.type;
 	}
-	tid.fields["server.page.title"] = tid.title;
-	tid.fields["server.title"] = tid.title; // XXX: !!! deprecated; retained for backwards-compatibility
+	tid.fields["server.page.id"] = tid.title;
+	tid.fields["server.title"] = tid.title;
 	if(tid.etag) { // collection tiddlers lack ETag
-		tid.fields["server.page.etag"] = tid.etag;
-		tid.fields["server.etag"] = tid.etag; // XXX: !!! deprecated; retained for backwards-compatibility
+		tid.fields["server.etag"] = tid.etag;
 	}
-	tid.fields["server.page.permissions"] = tid.permissions.join(", ");
-	tid.fields["server.permissions"] = tid.fields["server.page.permissions"]; // XXX: !!! deprecated; retained for backwards-compatibility
+	tid.fields["server.permissions"] = tid.permissions.join(", ");
 	tid.fields["server.page.revision"] = tid.revision;
 	var tiddler = new Tiddler(tid.title);
 	tiddler.assign(tiddler.title, tid.text, tid.modifier, tid.modified,
